@@ -1,0 +1,36 @@
+---
+title: "XAI3"
+author: "Marta y Fer"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1. Introduction & Motivation
+
+La desnormalizacion de las otras practicas y otras transformaciones
+```{r intro}
+library(randomForest)
+library(pdp)
+library(ggplot2)
+library(gridExtra)
+library(dplyr)
+
+bikes_df <- read.csv("day.csv")
+bikes <- bikes_df %>% mutate(days_since_2011 = as.numeric(instant - 1), 
+    temp = as.numeric(temp * 47 - 8), hum = as.numeric(hum * 100),
+    windspeed = as.numeric(windspeed * 67),
+    weathersit = factor(weathersit, levels = c(1, 2, 3, 4), 
+                        labels = c("GOOD", "MISTY", "RAIN", "HEAVY RAIN"))) %>%
+  select(cnt, days_since_2011, temp, hum, windspeed, workingday, holiday, season, weathersit)
+```
+
+# 2. Bike Rental Demand Analysis
+
+```{r esto, echo=FALSE}
+
+```
+
