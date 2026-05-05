@@ -18,6 +18,8 @@ library(pdp)
 library(ggplot2)
 library(gridExtra)
 library(dplyr)
+library(ggExtra) 
+library(viridis)
 
 bikes_df <- read.csv("day.csv")
 bikes <- bikes_df %>% mutate(days_since_2011 = as.numeric(instant - 1), 
@@ -31,6 +33,39 @@ bikes <- bikes_df %>% mutate(days_since_2011 = as.numeric(instant - 1),
 # 2. Bike Rental Demand Analysis
 
 ```{r esto, echo=FALSE}
+set.seed(42)
 
+bike_rf <- randomForest(cnt ~ days_since_2011 + temp + hum + windspeed, data = bikes, ntree = 500)
+
+pdp_days <- autoplot(partial(bike_rf, pred.var = "days_since_2011", train = bikes), colour = "#6aa84f", size = 1) + theme_minimal() + ggtitle("Days since 2011")
+pdp_temp <- autoplot(partial(bike_rf, pred.var = "temp", train = bikes), colour = "#6aa84f", size = 1) + theme_minimal() + ggtitle("Temperature")
+pdp_hum  <- autoplot(partial(bike_rf, pred.var = "hum", train = bikes), colour = "#6aa84f", size = 1) + theme_minimal() + ggtitle("Humidity")
+pdp_wind <- autoplot(partial(bike_rf, pred.var = "windspeed", train = bikes), colour = "#6aa84f", size = 1) + theme_minimal() + ggtitle("Wind Speed")
+
+grid.arrange(pdp_days, pdp_temp, pdp_hum, pdp_wind, ncol = 2)
+```
+
+# 3. 2D PDP
+
+```{r}
+set.seed(42)
+bikes_sampled <- bikes %>% sample_n(400) 
+
+pd_2d <- partial(bike_rf, pred.var = c("temp", "hum"), 
+                 train = bikes_sampled, grid.resolution = 20)
+
+pdp_2d_plot <- ggplot(pd_2d, aes(x = temp, y = hum)) +
+  geom_tile(aes(fill = yhat), width = 2.5, height = 6) + 
+  scale_fill_viridis_c(name = "Predicted\nRentals", option = "viridis") +
+  geom_point(data = bikes_sampled, aes(x = temp, y = hum), 
+             color = "white", alpha = 0.3, size = 0.8) +
+  theme_minimal() + labs(title = "2D PDP: Temperature vs. Humidity",
+    x = "Temperature (°C)", y = "Humidity (%)")
+
+pdp_2d_final <- ggMarginal(pdp_2d_plot, data = bikes_sampled, 
+                           x = "temp", y = "hum", type = "density", 
+                           color = "#6aa84f", fill = "#b6d7a9")
+
+pdp_2d_final
 ```
 
