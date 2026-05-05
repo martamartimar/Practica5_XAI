@@ -68,4 +68,44 @@ pdp_2d_final <- ggMarginal(pdp_2d_plot, data = bikes_sampled,
 
 pdp_2d_final
 ```
+# 4. House Price Explanation with PDP
+
+```{r house_pdp}
+set.seed(42)
+
+houses_df <- read.csv("kc_house_data.csv")
+
+# Usamos una muestra para reducir el tamaño, como pide el enunciado
+houses_sampled <- houses_df %>%
+  sample_n(2000) %>%
+  select(price, bedrooms, bathrooms, sqft_living, sqft_lot, floors, yr_built)
+
+house_rf <- randomForest(
+  price ~ bedrooms + bathrooms + sqft_living + sqft_lot + floors + yr_built,
+  data = houses_sampled,
+  ntree = 500
+)
+
+pdp_bed <- autoplot(partial(house_rf, pred.var = "bedrooms",
+                            train = houses_sampled),
+                    colour = "#6aa84f", size = 1) +
+  theme_minimal() + ggtitle("Bedrooms")
+
+pdp_bath <- autoplot(partial(house_rf, pred.var = "bathrooms",
+                             train = houses_sampled),
+                     colour = "#6aa84f", size = 1) +
+  theme_minimal() + ggtitle("Bathrooms")
+
+pdp_sqft <- autoplot(partial(house_rf, pred.var = "sqft_living",
+                             train = houses_sampled),
+                     colour = "#6aa84f", size = 1) +
+  theme_minimal() + ggtitle("sqft_living")
+
+pdp_floor <- autoplot(partial(house_rf, pred.var = "floors",
+                              train = houses_sampled),
+                      colour = "#6aa84f", size = 1) +
+  theme_minimal() + ggtitle("Floors")
+
+grid.arrange(pdp_bed, pdp_bath, pdp_sqft, pdp_floor, ncol = 2)
+```
 
