@@ -32,27 +32,37 @@ bikes <- bikes_df %>% mutate(days_since_2011 = as.numeric(instant - 1),
 
 # 2. Bike Rental Demand Analysis
 
+*Days since 2011:* consistent increase in bike rental over a period of 2 years aprox.
+
+*Temperature:* th demand is not lineal, it increases till 25°C, then decreases as the tempt gets over 30°C.  
+
+*Humidity:* demand stable until approximately 60% humidity, after which it drops. 
+
+*Wind Speed:* negative correlation; as wind speed increases, the number of rentals decreases, especially beyond 20 km/h.
+
 ```{r esto, echo=FALSE}
 set.seed(42)
 
 bike_rf <- randomForest(cnt ~ days_since_2011 + temp + hum + windspeed, data = bikes, ntree = 500)
 
-pdp_days <- autoplot(partial(bike_rf, pred.var = "days_since_2011", train = bikes), colour = "#6aa84f", size = 1) + theme_minimal() + ggtitle("Days since 2011")
-pdp_temp <- autoplot(partial(bike_rf, pred.var = "temp", train = bikes), colour = "#6aa84f", size = 1) + theme_minimal() + ggtitle("Temperature")
-pdp_hum  <- autoplot(partial(bike_rf, pred.var = "hum", train = bikes), colour = "#6aa84f", size = 1) + theme_minimal() + ggtitle("Humidity")
-pdp_wind <- autoplot(partial(bike_rf, pred.var = "windspeed", train = bikes), colour = "#6aa84f", size = 1) + theme_minimal() + ggtitle("Wind Speed")
+pdp_days <- autoplot(partial(bike_rf, pred.var = "days_since_2011", train = bikes), colour = "#6aa84f", linewidth = 1) + theme_minimal() + ggtitle("Days since 2011")
+pdp_temp <- autoplot(partial(bike_rf, pred.var = "temp", train = bikes), colour = "#6aa84f", linewidth = 1) + theme_minimal() + ggtitle("Temperature")
+pdp_hum  <- autoplot(partial(bike_rf, pred.var = "hum", train = bikes), colour = "#6aa84f", linewidth = 1) + theme_minimal() + ggtitle("Humidity")
+pdp_wind <- autoplot(partial(bike_rf, pred.var = "windspeed", train = bikes), colour = "#6aa84f", linewidth = 1) + theme_minimal() + ggtitle("Wind Speed")
 
 grid.arrange(pdp_days, pdp_temp, pdp_hum, pdp_wind, ncol = 2)
 ```
 
-# 3. 2D PDP
+# 3. Climatological Interactions: 2D PDP
+
+The 2D plot reveals that the highest demand occurs when temperatures are warm (20-25°C) and humidity is relatively low (below 50%). High humidity reduces demand regardless of temperature.
 
 ```{r}
 set.seed(42)
 bikes_sampled <- bikes %>% sample_n(400) 
 
 pd_2d <- partial(bike_rf, pred.var = c("temp", "hum"), 
-                 train = bikes_sampled, grid.resolution = 20)
+                 train = bikes_sampled, grid.resolution = 30)
 
 pdp_2d_plot <- ggplot(pd_2d, aes(x = temp, y = hum)) +
   geom_tile(aes(fill = yhat), width = 2.5, height = 6) + 
@@ -70,21 +80,23 @@ pdp_2d_final
 ```
 # 4. House Price Explanation with PDP
 
-```{r house_pdp}
+A Random Forest needs enough data to learn the patterns of the house market so all data is used to train. However, due to the size of the dataset,a set of random samples is extracted from the BBDD before
+generating the data for the Partial Dependency Plot.
+
+```{r}
 set.seed(42)
 
 houses_df <- read.csv("kc_house_data.csv")
 
-# Usamos una muestra para reducir el tamaño, como pide el enunciado
 houses_sampled <- houses_df %>%
-  sample_n(2000) %>%
   select(price, bedrooms, bathrooms, sqft_living, sqft_lot, floors, yr_built)
 
 house_rf <- randomForest(
   price ~ bedrooms + bathrooms + sqft_living + sqft_lot + floors + yr_built,
   data = houses_sampled,
-  ntree = 500
-)
+  ntree = 500)
+
+houses_sampled <- houses_sampled %>% sample_n(2000)
 
 pdp_bed <- autoplot(partial(house_rf, pred.var = "bedrooms",
                             train = houses_sampled),
