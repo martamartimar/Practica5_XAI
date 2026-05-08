@@ -25,8 +25,8 @@ bikes_df <- read.csv("day.csv")
 bikes <- bikes_df %>% mutate(days_since_2011 = as.numeric(instant - 1), 
     temp = as.numeric(temp * 47 - 8), hum = as.numeric(hum * 100),
     windspeed = as.numeric(windspeed * 67),
-    weathersit = factor(weathersit, levels = c(1, 2, 3, 4), 
-                        labels = c("GOOD", "MISTY", "RAIN", "HEAVY RAIN"))) %>%
+    weathersit = factor(weathersit, levels = c(1, 2, 3), 
+                        labels = c("GOOD", "MISTY", "RAIN"))) %>%
   select(cnt, days_since_2011, temp, hum, windspeed, workingday, holiday, season, weathersit)
 ```
 
